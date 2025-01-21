@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Previous head section remains the same -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoE Kavach Chatbot</title>
+    <style>
+        /* Previous styles remain the same until header */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f0f0f0;
+            padding-top: 80px; /* Add padding to account for fixed header */
+        }
+
+        .header {
+            background-color: #000;
+            color: white;
+            padding: 15px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            height: 80px; /* Fixed height for header */
+        }
+
+        .logo {
+            height: 50px;
+            margin-right: 15px;
+        }
+
+        .header-content {
+            flex-grow: 1;
+        }
+
+        .header-title {
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .header-subtitle {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .welcome-container {
+            margin: 20px auto 0; /* Adjusted margin */
+            padding: 20px;
+            text-align: center;
+            max-width: 800px;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .welcome-text {
+            display: inline-block;
+            font-size: 18px;
+            color: #333;
+            line-height: 1.5;
+            text-align: left;
+        }
+
+        .welcome-text .line {
+            display: block;
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: slideIn 0.5s forwards;
+        }
+
+        .welcome-text .line:nth-child(1) { animation-delay: 0.5s; }
+        .welcome-text .line:nth-child(2) { animation-delay: 1.5s; }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .chat-container {
+            max-width: 800px;
+            margin: 20px auto 90px; /* Increased bottom margin to prevent overlap with input */
+            padding: 20px;
+            min-height: calc(100vh - 250px); /* Ensure minimum height for content */
+        }
+
+        /* Rest of the styles remain the same */
+        .message {
+            margin: 10px 0;
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            line-height: 1.4;
+        }
+
+        .message a {
+            color: #0066cc;
+            text-decoration: underline;
+            word-break: break-all;
+        }
+
+        .sent {
+            background-color: #fca56a;
+            margin-left: auto;
+            border-radius: 15px;
+        }
+
+        .received {
+            background-color: white;
+            margin-right: auto;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .input-container {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #f5f5f5;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000; /* Ensure input stays on top */
+        }
+
+        .input-group {
+            width: 60%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-box {
+            flex-grow: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 25px;
+            background-color: #e9e9e9;
+            margin: 0 5px;
+        }
+
+        .input-box:focus {
+            outline: none;
+        }
+
+        .send-icon {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .loading {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .loading span {
+            width: 6px;
+            height: 6px;
+            background-color: #666;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading span:nth-child(1) { animation-delay: -0.32s; }
+        .loading span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<!-- Rest of the HTML and JavaScript code remains the same -->
+<body>
+    <header class="header">
+        <img src="https://i.ibb.co/54dp60c/9a1c8b9f539e21c88391ef4315bd6a7ee.png" alt="Kavach Logo" class="logo">
+        <div class="header-content">
+            <h1 class="header-title">IR AI Assistant</h1>
+            <div class="header-subtitle">IRISET, Indian Railways</div>
+        </div>
+    </header>
+
+    <div class="welcome-container" id="welcomeContainer">
+        <div class="welcome-text">
+            <span class="line">Get Instant responses from Indian Railways AI Assistant.</span>
+            <span class="line">Enter your query and press Enter below to get started.</span>
+        </div>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <!-- Messages will be dynamically added here -->
+    </div>
+
+    <div class="input-container">
+        <div class="input-group">
+            <input type="text" class="input-box" id="userInput" placeholder="ask anything...">
+            <svg class="send-icon" viewBox="0 0 24 24">
+                <path fill="#666" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+        </div>
+    </div>
+
+<script>
+    const BASE_URL = 'https://script.google.com/macros/s/AKfycbwzH_EGCnEBcTf6bkHBdBPnlx_4D4NdWZvZGLRrtMr_G6Kx5QyyZzIPHFijum64KYF4/exec';
+    
+    const chatContainer = document.getElementById('chatContainer');
+    const userInput = document.getElementById('userInput');
+    const sendIcon = document.querySelector('.send-icon');
+    const welcomeContainer = document.getElementById('welcomeContainer');
+
+    let isFirstQuery = true;
+
+    function hideWelcomeMessage() {
+        if (isFirstQuery) {
+            welcomeContainer.style.opacity = '0';
+            setTimeout(() => {
+                welcomeContainer.classList.add('hidden');
+            }, 000);
+            isFirstQuery = false;
+        }
+    }
+
+    function createLoadingMessage() {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message received loading';
+        for (let i = 0; i < 3; i++) {
+            const dot = document.createElement('span');
+            messageDiv.appendChild(dot);
+        }
+        return messageDiv;
+    }
+
+    function linkifyText(text) {
+        const div = document.createElement('div');
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        let lastIndex = 0;
+        let match;
+
+        while ((match = urlRegex.exec(text)) !== null) {
+            // Add the text before the URL
+            if (match.index > lastIndex) {
+                div.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+            }
+
+            // Add the URL as a link
+            const link = document.createElement('a');
+            link.href = match[0];
+            link.textContent = match[0];
+            link.target = "_blank";
+            div.appendChild(link);
+
+            lastIndex = urlRegex.lastIndex;
+        }
+
+        // Add any remaining text after the last URL
+        if (lastIndex < text.length) {
+            div.appendChild(document.createTextNode(text.substring(lastIndex)));
+        }
+
+        return div;
+    }
+
+    function addMessage(text, isSent) {
+        hideWelcomeMessage();
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+        
+        const formattedText = text.replace(/\r\n/g, '\n');
+        
+        if (isSent) {
+            messageDiv.textContent = formattedText;
+        } else {
+            const processedContent = linkifyText(formattedText);
+            messageDiv.appendChild(processedContent);
+        }
+        
+        chatContainer.appendChild(messageDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    async function makeRequest(url, retryCount = 1) {
+        try {
+            const response = await fetch(url);
+            const text = await response.text();
+            return text;
+        } catch (error) {
+            if (retryCount > 0) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                return makeRequest(url, retryCount - 1);
+            }
+            throw error;
+        }
+    }
+
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+
+        addMessage(message, true);
+        userInput.value = '';
+
+        const loadingMessage = createLoadingMessage();
+        chatContainer.appendChild(loadingMessage);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        try {
+            const url = `${BASE_URL}?prompt=${encodeURIComponent(message)}`;
+            const text = await makeRequest(url, 1);
+            loadingMessage.remove();
+            addMessage(text, false);
+        } catch (error) {
+            console.error('Error:', error);
+            loadingMessage.remove();
+        }
+    }
+
+    sendIcon.addEventListener('click', sendMessage);
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+</script>
+</body>
+</html>
